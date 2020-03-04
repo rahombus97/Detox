@@ -15,6 +15,7 @@ const Client = require('./client/Client');
 const DetoxServer = require('./server/DetoxServer');
 const URL = require('url').URL;
 const ArtifactsManager = require('./artifacts/ArtifactsManager');
+const userLogDecorator = require('./utils/UserLogDecorator');
 
 const DEVICE_CLASSES = {
   'ios.simulator': SimulatorDriver,
@@ -46,6 +47,7 @@ class Detox {
     const params = {
       launchApp: true,
       initGlobals: true,
+      consoleViaDetox: true,
       ...userParams,
     };
 
@@ -91,6 +93,10 @@ class Detox {
     }
 
     await this._artifactsManager.onInit();
+
+    if (params.consoleViaDetox) {
+      this._decorateUserLogs();
+    }
 
     return this;
   }
@@ -205,6 +211,14 @@ class Detox {
     configuration.validateSession(session);
 
     return session;
+  }
+
+  _decorateUserLogs() {
+    const _log = logger.child();
+    userLogDecorator.decorate('debug', _log.debug.bind(_log));
+    userLogDecorator.decorate('log', _log.info.bind(_log));
+    userLogDecorator.decorate('warn', _log.warn.bind(_log));
+    userLogDecorator.decorate('error', _log.error.bind(_log));
   }
 }
 
